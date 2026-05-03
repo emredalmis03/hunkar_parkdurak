@@ -23,7 +23,6 @@ def _calc_lsl(alpha: float, beta: float, d: float) -> tuple[float, float, float]
 
 
 def _calc_rsr(alpha: float, beta: float, d: float) -> tuple[float, float, float] | None:
-    """Calculate lengths for Right-Straight-Right path."""
     p_sq = 2 + d**2 - 2 * math.cos(alpha - beta) + 2 * d * (math.sin(beta) - math.sin(alpha))
     if p_sq < 0:
         return None
@@ -173,5 +172,36 @@ def plan(start_pose: Pose2D, goal_pose: Pose2D) -> list[Waypoint]:
         yaw=normalize_angle(goal_pose.yaw),
         gear=Gear.FORWARD
     ))
+    
 
+
+    #validation şeyleri
+    if not waypoints:
+        print("Dubins planner bug: path empty.")
+        return []
+    dist_start = math.hypot(waypoints[0].x - start_pose.x, waypoints[0].y - start_pose.y)
+    if dist_start > 0.5:
+        print(f"Dubins planner bug: first waypoint too far")
+        return []
+    dist_goal = math.hypot(waypoints[-1].x - goal_pose.x, waypoints[-1].y - goal_pose.y)
+    if dist_goal > 0.5:
+        print(f"Dubins planner bug: Last waypoint too far.")
+        return []
+
+    for i in range(1, len(waypoints)):
+        prev = waypoints[i-1]
+        curr = waypoints[i]
+            
+        dist_jump = math.hypot(curr.x - prev.x, curr.y - prev.y)
+        if dist_jump > SAMPLE_STEP_M * 2.5:
+            print(f"Dubins planner bug: discontinuitiy jump")
+            return []
+                
+        heading_jump = abs(normalize_angle(curr.yaw - prev.yaw))
+        if heading_jump > math.pi / 2:
+            print(f"Dubins planner bug: too sharp turn")
+            return []
+
+    print("dubins path generated successfully")
+    print(f"dubins path waypoint count:{len(waypoints)}")
     return waypoints
