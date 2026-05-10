@@ -16,14 +16,15 @@ class VehicleInterface:
         self.steering_feedback = None
         self.emergency_active = False
 
-        self.brake_pub = self.create_publisher(
+        self.brake_pub = self.node.create_publisher(
             AUTONOMOUS_BrakePedalControl, '/beemobs/AUTONOMOUS_BrakePedalControl', 10)
-        self.unittomux_pub = self.create_publisher(
+        self.unittomux_pub = self.node.create_publisher(
             rc_unittoOmux, '/beemobs/rc_unittoOmux', 10)
-        self.hb_pub = self.create_publisher(
+        self.hb_pub = self.node.create_publisher(
             AUTONOMOUS_HB_MotorControl, '/beemobs/AUTONOMOUS_HB_MotorControl', 10)
-        self.steer_pub = self.create_publisher(
+        self.steer_pub = self.node.create_publisher(
             AUTONOMOUS_SteeringMotControl, '/beemobs/AUTONOMOUS_SteeringMot_Control', 10)
+        self.thrt_pub = self.node.create_publisher(RC_THRT_DATA,'/beemobs/RC_THRT_DATA',10)
         
 
     def send_throttle(self, position):
@@ -38,6 +39,7 @@ class VehicleInterface:
         msg.autonomous_brakepedalmotor_per = pwm if enable else 0
         msg.autonomous_brakepedalmotor_acc = 10000 if enable else 0
         msg.autonomous_brakepedalmotor_en = 1 if enable else 0
+        self.node.get_logger().info(f"{'Fren uygulaniyor' if enable else 'Fren serbest birakiliyor'}: PWM={pwm}")
         self.brake_pub.publish(msg)
 
     def send_steering(self, pwm):
@@ -52,7 +54,7 @@ class VehicleInterface:
         msg.rc_selectiongear = 1
         msg.autonomous_emergency = 0
         self.unittomux_pub.publish(msg)
-        self.get_logger().info("🟢 Ateşleme verildi ve vites ileri alındı.")
+        self.node.get_logger().info("🟢 Ateşleme verildi ve vites ileri alindi.")
 
     def release_handbrake(self):
         msg = AUTONOMOUS_HB_MotorControl()
@@ -62,7 +64,7 @@ class VehicleInterface:
         self.hb_pub.publish(msg)
 
     def shutdown_procedure(self):
-        self.get_logger().warn("Node kapatılıyor! Gaz kesiliyor, fren uygulanıyor...")
+        self.node.get_logger().warn("Node kapatiliyor! Gaz kesiliyor, fren uygulaniyor...")
         self.send_throttle(0)
         self.send_brake(True, 100)
 

@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'vehicle_test = parking_stop_planner.vehicle_interface_test_node:main',
         ],
     },
 )
